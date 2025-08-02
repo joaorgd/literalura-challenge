@@ -1,4 +1,4 @@
-package com.literatura.liter_alura;
+package com.alura.literalura;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
