@@ -1,4 +1,3 @@
-// Pacote: com.alura.literalura.dto
 package com.alura.literalura.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
