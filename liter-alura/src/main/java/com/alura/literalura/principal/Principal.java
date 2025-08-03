@@ -1,31 +1,26 @@
-// Pacote: com.alura.literalura.principal
 package com.alura.literalura.principal;
 
-import com.alura.literalura.dto.DadosLivro;
-import com.alura.literalura.dto.ResultadosDTO;
 import com.alura.literalura.model.Autor;
 import com.alura.literalura.model.Livro;
 import com.alura.literalura.repository.AutorRepository;
 import com.alura.literalura.repository.LivroRepository;
-import com.alura.literalura.service.ConsumoApi;
-import com.alura.literalura.service.ConverteDados;
+import com.alura.literalura.service.LivroService;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Scanner;
 
 public class Principal {
     private final Scanner leitura = new Scanner(System.in);
-    private final ConsumoApi consumoApi = new ConsumoApi();
-    private final ConverteDados conversor = new ConverteDados();
-    private final String ENDERECO = "https://gutendex.com/books";
 
+    // Agora, a classe Principal só precisa conhecer seus repositórios e o novo serviço.
     private final LivroRepository livroRepository;
     private final AutorRepository autorRepository;
+    private final LivroService livroService;
 
-    public Principal(LivroRepository livroRepository, AutorRepository autorRepository) {
+    public Principal(LivroRepository livroRepository, AutorRepository autorRepository, LivroService livroService) {
         this.livroRepository = livroRepository;
         this.autorRepository = autorRepository;
+        this.livroService = livroService;
     }
 
     public void exibeMenu() {
@@ -35,7 +30,7 @@ public class Principal {
                     \n*** BEM-VINDO AO LITERALURA ***
                     Escolha uma das opções abaixo:
                     
-                    1 - Buscar livro pelo título
+                    1 - Buscar livro pelo título e salvar
                     2 - Listar livros registrados
                     3 - Listar autores registrados
                     4 - Listar autores vivos em um determinado ano
@@ -54,10 +49,9 @@ public class Principal {
                 continue;
             }
 
-
             switch (opcao) {
                 case 1:
-                    buscarLivroPeloTitulo();
+                    buscarLivroWebESalvar(); // Nome do método ficou mais claro
                     break;
                 case 2:
                     listarLivrosRegistrados();
@@ -80,46 +74,14 @@ public class Principal {
         }
     }
 
-    private void buscarLivroPeloTitulo() {
+    // Veja como este método ficou mais simples e legível!
+    private void buscarLivroWebESalvar() {
         System.out.println("Digite o nome do livro que você deseja buscar:");
         var nomeLivro = leitura.nextLine();
-        var json = consumoApi.obterDados(ENDERECO + nomeLivro.replace(" ", "%20"));
-
-        ResultadosDTO resultados = conversor.obterDados(json, ResultadosDTO.class);
-
-        if (resultados != null && resultados.livros() != null && !resultados.livros().isEmpty()) {
-            DadosLivro dadosLivro = resultados.livros().get(0); // Pega o primeiro livro da busca
-
-            // Verifica se o livro já existe no banco
-            Optional<Livro> livroExistente = livroRepository.findByTituloContainingIgnoreCase(dadosLivro.titulo());
-            if(livroExistente.isPresent()) {
-                System.out.println("Este livro já está cadastrado no banco de dados.");
-                return;
-            }
-
-            // Verifica se o autor já existe no banco
-            Autor autor;
-            Optional<Autor> autorExistente = autorRepository.findByNomeContainingIgnoreCase(dadosLivro.autores().get(0).nome());
-
-            if (autorExistente.isPresent()) {
-                autor = autorExistente.get();
-            } else {
-                autor = new Autor(dadosLivro.autores().get(0));
-                autor = autorRepository.save(autor);
-            }
-
-            Livro livro = new Livro(dadosLivro);
-            livro.setAutor(autor);
-            livroRepository.save(livro);
-
-            System.out.println("Livro salvo com sucesso!");
-            System.out.println(livro);
-
-        } else {
-            System.out.println("Livro não encontrado com esse título.");
-        }
+        livroService.buscarESalvarLivroPeloTitulo(nomeLivro); // Apenas chama o serviço
     }
 
+    // Os outros métodos que consultam diretamente o banco podem permanecer aqui
     private void listarLivrosRegistrados() {
         List<Livro> livros = livroRepository.findAll();
         if (livros.isEmpty()) {

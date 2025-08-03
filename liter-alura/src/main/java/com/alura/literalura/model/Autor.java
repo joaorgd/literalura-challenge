@@ -18,7 +18,7 @@ public class Autor {
     private Integer anoNascimento;
     private Integer anoFalecimento;
 
-    @OneToMany(mappedBy = "autor", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "autor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Livro> livros = new ArrayList<>();
 
     public Autor() {}

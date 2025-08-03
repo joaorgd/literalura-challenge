@@ -16,7 +16,7 @@ public class Livro {
     private String idioma;
     private Integer totalDownloads;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne
     private Autor autor;
 
     // Construtor padrão
