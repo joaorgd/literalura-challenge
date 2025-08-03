@@ -14,12 +14,13 @@ public class Livro {
     private String titulo;
 
     private String idioma;
-    private Integer totalDownloads;
 
+    // @ManyToOne: Define a relação "muitos livros para um autor".
+    // Esta é a entidade "dona" do relacionamento, onde a chave estrangeira (autor_id) será criada.
     @ManyToOne
     private Autor autor;
 
-    // Construtor padrão
+    // Construtor padrão exigido pelo JPA
     public Livro() {}
 
     public Livro(DadosLivro dadosLivro) {
@@ -27,27 +28,22 @@ public class Livro {
         this.idioma = dadosLivro.idiomas().isEmpty() ? "desconhecido" : dadosLivro.idiomas().get(0);
     }
 
-    // Getters, Setters e toString()
-    // ...
-
     @Override
     public String toString() {
-        return "------ LIVRO ------" +
+        return "---------- LIVRO ----------" +
                 "\nTítulo: " + titulo +
                 "\nAutor: " + (autor != null ? autor.getNome() : "Desconhecido") +
                 "\nIdioma: " + idioma +
-                "\n-------------------";
+                "\n---------------------------";
     }
 
-    // Getters e Setters
+    // --- Getters e Setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTitulo() { return titulo; }
     public void setTitulo(String titulo) { this.titulo = titulo; }
     public String getIdioma() { return idioma; }
     public void setIdioma(String idioma) { this.idioma = idioma; }
-    public Integer getTotalDownloads() { return totalDownloads; }
-    public void setTotalDownloads(Integer totalDownloads) { this.totalDownloads = totalDownloads; }
     public Autor getAutor() { return autor; }
     public void setAutor(Autor autor) { this.autor = autor; }
 }

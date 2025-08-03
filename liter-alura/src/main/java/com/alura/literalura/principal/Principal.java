@@ -6,13 +6,12 @@ import com.alura.literalura.repository.AutorRepository;
 import com.alura.literalura.repository.LivroRepository;
 import com.alura.literalura.service.LivroService;
 
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
 
 public class Principal {
     private final Scanner leitura = new Scanner(System.in);
-
-    // Agora, a classe Principal só precisa conhecer seus repositórios e o novo serviço.
     private final LivroRepository livroRepository;
     private final AutorRepository autorRepository;
     private final LivroService livroService;
@@ -24,34 +23,14 @@ public class Principal {
     }
 
     public void exibeMenu() {
-        var opcao = -1;
+        int opcao = -1;
         while (opcao != 0) {
-            var menu = """
-                    \n*** BEM-VINDO AO LITERALURA ***
-                    Escolha uma das opções abaixo:
-                    
-                    1 - Buscar livro pelo título e salvar
-                    2 - Listar livros registrados
-                    3 - Listar autores registrados
-                    4 - Listar autores vivos em um determinado ano
-                    5 - Listar livros em um determinado idioma
-                    
-                    0 - Sair
-                    """;
-
-            System.out.println(menu);
-            try {
-                opcao = leitura.nextInt();
-                leitura.nextLine(); // Limpar o buffer
-            } catch (Exception e) {
-                System.out.println("Opção inválida. Por favor, digite um número.");
-                leitura.nextLine(); // Limpar o buffer em caso de erro
-                continue;
-            }
+            imprimirMenu();
+            opcao = lerOpcaoDoMenu();
 
             switch (opcao) {
                 case 1:
-                    buscarLivroWebESalvar(); // Nome do método ficou mais claro
+                    buscarLivroWebESalvar();
                     break;
                 case 2:
                     listarLivrosRegistrados();
@@ -66,7 +45,7 @@ public class Principal {
                     listarLivrosEmDeterminadoIdioma();
                     break;
                 case 0:
-                    System.out.println("Saindo do LiterAlura...");
+                    System.out.println("Encerrando o LiterAlura... Até a próxima!");
                     break;
                 default:
                     System.out.println("Opção inválida!");
@@ -74,31 +53,58 @@ public class Principal {
         }
     }
 
-    // Veja como este método ficou mais simples e legível!
+    // Extrair a impressão do menu e a leitura da opção para métodos separados.
+    private void imprimirMenu() {
+        var menu = """
+                \n*** BEM-VINDO AO LITERALURA ***
+                Escolha uma das opções abaixo:
+                
+                1 - Buscar livro pelo título e salvar
+                2 - Listar livros registrados
+                3 - Listar autores registrados
+                4 - Listar autores vivos em um determinado ano
+                5 - Listar livros em um determinado idioma
+                
+                0 - Sair
+                """;
+        System.out.println(menu);
+    }
+
+    private int lerOpcaoDoMenu() {
+        try {
+            int opcao = leitura.nextInt();
+            leitura.nextLine(); // Limpa o buffer
+            return opcao;
+        } catch (InputMismatchException e) {
+            System.out.println("Entrada inválida. Por favor, digite um número.");
+            leitura.nextLine(); // Limpa o buffer em caso de erro
+            return -1; // Retorna um valor inválido para o loop continuar
+        }
+    }
+
     private void buscarLivroWebESalvar() {
         System.out.println("Digite o nome do livro que você deseja buscar:");
         var nomeLivro = leitura.nextLine();
-        livroService.buscarESalvarLivroPeloTitulo(nomeLivro); // Apenas chama o serviço
+        livroService.buscarESalvarLivroPeloTitulo(nomeLivro);
     }
 
-    // Os outros métodos que consultam diretamente o banco podem permanecer aqui
     private void listarLivrosRegistrados() {
         List<Livro> livros = livroRepository.findAll();
-        if (livros.isEmpty()) {
-            System.out.println("Nenhum livro registrado.");
-        } else {
-            System.out.println("\n--- LIVROS REGISTRADOS ---");
-            livros.forEach(System.out::println);
-        }
+        imprimirLista(livros, "Nenhum livro registrado.", "\n--- LIVROS REGISTRADOS ---");
     }
 
     private void listarAutoresRegistrados() {
         List<Autor> autores = autorRepository.findAll();
-        if (autores.isEmpty()) {
-            System.out.println("Nenhum autor registrado.");
+        imprimirLista(autores, "Nenhum autor registrado.", "\n--- AUTORES REGISTRADOS ---");
+    }
+
+    // Método genérico para imprimir listas, aplicando o princípio DRY.
+    private <T> void imprimirLista(List<T> lista, String mensagemVazia, String cabecalho) {
+        if (lista.isEmpty()) {
+            System.out.println(mensagemVazia);
         } else {
-            System.out.println("\n--- AUTORES REGISTRADOS ---");
-            autores.forEach(System.out::println);
+            System.out.println(cabecalho);
+            lista.forEach(System.out::println);
         }
     }
 
@@ -106,15 +112,10 @@ public class Principal {
         System.out.println("Digite o ano para buscar autores vivos:");
         try {
             int ano = leitura.nextInt();
-            leitura.nextLine(); // Limpar buffer
+            leitura.nextLine();
             List<Autor> autores = autorRepository.findAutoresVivosNoAno(ano);
-            if (autores.isEmpty()) {
-                System.out.println("Nenhum autor vivo encontrado para o ano de " + ano);
-            } else {
-                System.out.println("\n--- AUTORES VIVOS EM " + ano + " ---");
-                autores.forEach(System.out::println);
-            }
-        } catch (Exception e) {
+            imprimirLista(autores, "Nenhum autor vivo encontrado para o ano de " + ano, "\n--- AUTORES VIVOS EM " + ano + " ---");
+        } catch (InputMismatchException e) {
             System.out.println("Ano inválido. Por favor, digite um número.");
             leitura.nextLine();
         }
@@ -122,13 +123,8 @@ public class Principal {
 
     private void listarLivrosEmDeterminadoIdioma() {
         System.out.println("Digite o idioma para a busca (ex: pt, en, es, fr):");
-        var idioma = leitura.nextLine();
+        var idioma = leitura.nextLine().toLowerCase();
         List<Livro> livros = livroRepository.findByIdioma(idioma);
-        if(livros.isEmpty()) {
-            System.out.println("Nenhum livro encontrado para o idioma '" + idioma + "'." );
-        } else {
-            System.out.println("\n--- LIVROS EM '" + idioma.toUpperCase() + "' ---");
-            livros.forEach(System.out::println);
-        }
+        imprimirLista(livros, "Nenhum livro encontrado para o idioma '" + idioma + "'.", "\n--- LIVROS EM '" + idioma.toUpperCase() + "' ---");
     }
 }

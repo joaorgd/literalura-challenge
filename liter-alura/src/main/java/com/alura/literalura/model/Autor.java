@@ -4,6 +4,7 @@ import com.alura.literalura.dto.DadosAutor;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "autores")
@@ -18,6 +19,10 @@ public class Autor {
     private Integer anoNascimento;
     private Integer anoFalecimento;
 
+    // @OneToMany: Define a relação "um autor para muitos livros".
+    // mappedBy = "autor": Indica que a entidade Livro é a dona do relacionamento.
+    // cascade = CascadeType.ALL: Operações no Autor (salvar, deletar) serão cascateadas para seus Livros.
+    // fetch = FetchType.LAZY: Os livros só serão carregados do banco quando acessados diretamente (ótimo para performance).
     @OneToMany(mappedBy = "autor", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Livro> livros = new ArrayList<>();
 
@@ -31,10 +36,27 @@ public class Autor {
 
     @Override
     public String toString() {
-        return "Autor: " + nome + " (Nascimento: " + anoNascimento + ", Falecimento: " + anoFalecimento + ")";
+        // Obtém apenas os títulos dos livros para evitar carregar a lista inteira e causar erros
+        // ou loops infinitos de impressão.
+        String titulosLivros = livros.stream()
+                .map(Livro::getTitulo)
+                .collect(Collectors.joining(", "));
+
+        return "---------- AUTOR ----------" +
+                "\nNome: " + nome +
+                "\nAno de Nascimento: " + anoNascimento +
+                "\nAno de Falecimento: " + anoFalecimento +
+                "\nLivros: [" + titulosLivros + "]" +
+                "\n---------------------------";
     }
 
-    // Getters e Setters
+    // --- Métodos Helper para sincronizar o relacionamento ---
+    public void addLivro(Livro livro) {
+        this.livros.add(livro);
+        livro.setAutor(this);
+    }
+
+    // --- Getters e Setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getNome() { return nome; }
